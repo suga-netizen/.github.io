@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS伴走・育成支援システム - コネクト・フォローアップ</title>
+    
+    <!-- Tailwind CSS (v3) CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter & Noto Sans JP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Tailwind Config for Custom Theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            50: '#f4f6f9',
+                            100: '#e8ecf3',
+                            200: '#d5deea',
+                            300: '#b5c6db',
+                            400: '#8da6c7',
+                            500: '#6985b1',
+                            600: '#526b97',
+                            700: '#43567d',
+                            800: '#1B365D', // ディープネイビーベース
+                            900: '#152946',
+                            950: '#0d1a2d',
+                        },
+                        saffron: {
+                            50: '#fffbf0',
+                            100: '#feebd0',
+                            200: '#fcd39f',
+                            300: '#faa860',
+                            400: '#f7832f',
+                            500: '#e67e22', // 温かみのあるサフラン
+                            600: '#cc6114',
+                            700: '#aa4710',
+                            950: '#4c1a03',
+                        },
+                        mint: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#2ecc71', // ポジティブエメラルド
+                            600: '#16a34a',
+                            700: '#15803d',
+                            950: '#052e16',
+                        },
+                        paleblue: {
+                            50: '#f8fafc',
+                            100: '#f0f4f8', // ペールブルー背景
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            DEFAULT: '#F0F4F8',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans JP', 'Yu Gothic', 'Meiryo', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'premium': '0 10px 30px -5px rgba(27, 54, 93, 0.08), 0 4px 12px -2px rgba(27, 54, 93, 0.03)',
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif;
+            background-color: #F0F4F8;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+        .float-anim {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes stamp-bang {
+            0% { transform: scale(3) rotate(-20deg); opacity: 0; }
+            50% { transform: scale(0.9) rotate(-10deg); opacity: 0.9; }
+            80% { transform: scale(1.1) rotate(-15deg); }
+            100% { transform: scale(1) rotate(-12deg); opacity: 1; }
+        }
+        .stamp-applied {
+            animation: stamp-bang 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes slide-in {
+            0% { transform: translateY(100%) translateX(-50%); opacity: 0; }
+            100% { transform: translateY(0) translateX(-50%); opacity: 1; }
+        }
+        .toast-active {
+            animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1B365D;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            box-shadow: 0 0 10px rgba(27, 54, 93, 0.3);
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col font-sans">
+
+    <!-- 背景装飾 -->
+    <div class="fixed top-0 left-1/4 w-96 h-96 bg-navy-100 rounded-full filter blur-[100px] opacity-60 pointer-events-none -z-10"></div>
+    <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-saffron-100 rounded-full filter blur-[100px] opacity-40 pointer-events-none -z-10"></div>
+
+    <!-- 1. トップナビゲーション・コントロールバー -->
+    <header class="bg-gradient-to-r from-navy-950 via-navy-800 to-navy-900 text-white shadow-lg sticky top-0 z-40 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                
+                <!-- ロゴ & タイトル -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-saffron-400 to-saffron-500 flex items-center justify-center shadow-md">
+                        <i data-lucide="zap" class="w-6 h-6 text-white float-anim"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-wider flex items-center">
+                            コネクト・フォローアップ
+                            <span class="ml-2 text-xs bg-navy-700 text-saffron-300 px-2 py-0.5 rounded-full border border-navy-600 font-medium">LMS伴走システム</span>
+                        </h1>
+                        <p class="text-xs text-navy-300">個人の成長に寄り添い、確かな対話を促すモックアップ</p>
+                    </div>
+                </div>
+
+                <!-- コントローラー部: モード切り替え & ユーザー切り替え -->
+                <div class="flex flex-wrap items-center gap-3">
+                    
+                    <!-- A. モード切り替え -->
+                    <div class="bg-navy-900/60 p-1 rounded-xl border border-navy-700/50 flex space-x-1" id="mode-selector-wrapper">
+                        <button id="btn-mode-light" onclick="switchMode('light')" class="px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300">
+                            <i data-lucide="compass" class="w-3.5 h-3.5"></i>
+                            <span>ライト伴走</span>
+                        </button>
+                        <button id="btn-mode-detailed" onclick="switchMode('detailed')" class="px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300">
+                            <i data-lucide="scroll-text" class="w-3.5 h-3.5"></i>
+                            <span>じっくりシート</span>
+                        </button>
+                    </div>
+
+                    <!-- B. ロール(表示ユーザー)切り替えタブ -->
+                    <div class="bg-white/10 p-1 rounded-xl border border-white/10 flex space-x-1">
+                        <button id="btn-user-student" onclick="switchUser('student')" class="px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300">
+                            <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                            <span>受講生画面</span>
+                        </button>
+                        <button id="btn-user-boss" onclick="switchUser('boss')" class="px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 relative">
+                            <i data-lucide="users-2" class="w-3.5 h-3.5"></i>
+                            <span>上司画面</span>
+                            <span id="boss-badge" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-saffron-500 rounded-full animate-ping hidden"></span>
+                            <span id="boss-badge-solid" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-saffron-500 rounded-full hidden"></span>
+                        </button>
+                        <button id="btn-user-hr" onclick="switchUser('hr')" class="px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300">
+                            <i data-lucide="building" class="w-3.5 h-3.5"></i>
+                            <span>人事画面</span>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- 現在のステータスミニバー -->
+        <div class="mb-6 bg-white/70 border border-navy-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 text-navy-800 font-medium">
+                <i data-lucide="info" class="w-4 h-4 text-navy-600"></i>
+                <span>【デモガイド】現在、<strong class="text-navy-900" id="guide-mode-name">ライト伴走モード</strong> で <strong class="text-navy-900" id="guide-user-name">受講生</strong> として操作中。</span>
+            </div>
+            <div class="flex items-center gap-4 flex-wrap">
+                <span class="text-slate-500">山田太郎さん (営業第二グループ・入社2年目) の状況:</span>
+                <span id="current-status-badge" class="px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                    初期設定中
+                </span>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             上司・人事画面の初期設定前プレースホルダー
+             ============================================== -->
+        <div id="setup-waiting-placeholder" class="hidden bg-white rounded-3xl p-12 text-center shadow-premium border border-slate-100 flex flex-col items-center justify-center space-y-6">
+            <div class="relative w-24 h-24">
+                <!-- 波形アニメーション -->
+                <div class="absolute inset-0 rounded-full bg-saffron-100 animate-ping opacity-75"></div>
+                <div class="relative w-24 h-24 rounded-full bg-gradient-to-tr from-saffron-400 to-saffron-500 text-white flex items-center justify-center shadow-md">
+                    <i data-lucide="compass" class="w-12 h-12 float-anim"></i>
+                </div>
+            </div>
+            <div class="max-w-md space-y-2">
+                <h3 class="text-xl font-bold text-navy-900">受講生のアクションプラン設定を待っています</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">
+                    山田太郎さんが「受講生画面」にて目標とアクションプランを設定すると、この画面のロックが解除され、リアルタイムに評価・状況確認が行えるようになります。
+                </p>
+            </div>
+            <button onclick="switchUser('student')" class="bg-navy-800 hover:bg-navy-700 text-white text-xs font-bold px-6 py-3 rounded-2xl shadow-sm transition-all flex items-center gap-2 transform active:scale-95">
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                <span>受講生画面を開いて設定する</span>
+            </button>
+        </div>
+
+        <!-- ==============================================
+             受講生画面 (初期設定フェーズ UI & 運用UI)
+             ============================================== -->
+        <section id="view-student" class="space-y-6 hidden">
+            
+            <!-- A. 初期設定フェーズ画面 (appPhase === 'setup' の時のみ表示) -->
+            <div id="student-setup-view" class="bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-slate-100 space-y-8">
+                
+                <div class="border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-2 text-saffron-500">
+                        <i data-lucide="sliders" class="w-6 h-6 animate-pulse"></i>
+                        <span class="text-xs font-extrabold uppercase tracking-wider">Phase 0: 伴走プランの設計</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-navy-800 mt-1">フォローアップ初期設定</h2>
+                    <p class="text-xs text-slate-500 mt-1">このフォローアップで取り組む目標と、振り返りのサイクルを設定します。</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <!-- 1. モード選択 -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-navy-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 bg-navy-800 rounded-full"></span>
+                            <span>振り返りの種類（モード）</span>
+                        </label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <label class="cursor-pointer group flex items-center justify-between p-3.5 bg-white border-2 border-slate-200 rounded-xl hover:border-navy-300 transition-all" id="setup-mode-light-label">
+                                <input type="radio" name="setup-mode" value="light" checked onchange="toggleSetupInputs('light')" class="sr-only">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="compass" class="w-4 h-4 text-navy-600"></i>
+                                    <div class="text-left">
+                                        <div class="text-xs font-bold text-slate-800">ライト伴走</div>
+                                        <div class="text-[10px] text-slate-400">毎週サイクルの直感的な振り返り</div>
+                                    </div>
+                                </div>
+                                <div class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center" id="setup-radio-light-dot">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-navy-800"></div>
+                                </div>
+                            </label>
+                            
+                            <label class="cursor-pointer group flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl hover:border-navy-300 transition-all" id="setup-mode-detailed-label">
+                                <input type="radio" name="setup-mode" value="detailed" onchange="toggleSetupInputs('detailed')" class="sr-only">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="scroll-text" class="w-4 h-4 text-navy-600"></i>
+                                    <div class="text-left">
+                                        <div class="text-xs font-bold text-slate-800">じっくりシート</div>
+                                        <div class="text-[10px] text-slate-400">3ヶ月スパンの構造的な振り返り</div>
+                                    </div>
+                                </div>
+                                <div class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center" id="setup-radio-detailed-dot">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-navy-800 hidden"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 2. 振り返りサイクル -->
+                    <div class="space-y-2">
+                        <label for="setup-cycle" class="text-xs font-bold text-navy-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 bg-navy-800 rounded-full"></span>
+                            <span>振り返りサイクル</span>
+                        </label>
+                        <select id="setup-cycle" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-medium focus:border-navy-500 outline-none">
+                            <option value="weekly" selected>毎週金曜日（推奨）</option>
+                            <option value="biweekly">隔週金曜日</option>
+                            <option value="monthly">毎月末日</option>
+                        </select>
+                        <p class="text-[10px] text-slate-400 leading-normal">指定された周期で振り返りリマインドが届きます。</p>
+                    </div>
+
+                    <!-- 3. 合計期間 -->
+                    <div class="space-y-2">
+                        <label for="setup-duration" class="text-xs font-bold text-navy-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 bg-navy-800 rounded-full"></span>
+                            <span>伴走支援の合計期間</span>
+                        </label>
+                        <select id="setup-duration" class="w-full bg-white border border-slate-200 p-3 rounded-xl text-xs font-medium focus:border-navy-500 outline-none">
+                            <option value="1">1ヶ月間 (トライアル)</option>
+                            <option value="3" selected>3ヶ月間 (標準サイクル)</option>
+                            <option value="6">6ヶ月間 (長期育成)</option>
+                        </select>
+                        <p class="text-[10px] text-slate-400 leading-normal">目標達成に向けたロードマップ全体の期間です。</p>
+                    </div>
+                </div>
+
+                <!-- プラン入力欄 (ライト伴走用) -->
+                <div id="setup-inputs-light" class="space-y-4">
+                    <div class="space-y-2">
+                        <label for="setup-light-action" class="text-sm font-bold text-navy-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-4 bg-saffron-500 rounded-full"></span>
+                            <span>今週の小さなアクション（1つ）</span>
+                        </label>
+                        <p class="text-xs text-slate-400">若手が即実践できるような、小さく具体的なアクションを1つ定めます。</p>
+                        <input type="text" id="setup-light-action" class="w-full rounded-2xl border border-slate-200 p-4 text-sm focus:border-navy-500 focus:ring-1 focus:ring-navy-500 outline-none transition-all" placeholder="例：〇〇さんに挨拶のあと一言雑談をプラスする">
+                    </div>
+                </div>
+
+                <!-- プラン入力欄 (じっくりシート用) -->
+                <div id="setup-inputs-detailed" class="space-y-6 hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 目指すリーダー像 -->
+                        <div class="space-y-2">
+                            <label for="setup-det-vision" class="text-sm font-bold text-navy-800 flex items-center gap-1.5">
+                                <span class="w-1.5 h-4 bg-navy-800 rounded-full"></span>
+                                <span>目指すリーダー像</span>
+                            </label>
+                            <textarea id="setup-det-vision" rows="3" class="w-full rounded-2xl border border-slate-200 p-4 text-sm focus:border-navy-500 focus:ring-1 focus:ring-navy-500 outline-none transition-all resize-none" placeholder="例：チームメンバーの個性を活かし、主体性を引き出すサーバントリーダー"></textarea>
+                        </div>
+                        
+                        <!-- 現状の課題 -->
+                        <div class="space-y-2">
+                            <label for="setup-det-challenge" class="text-sm font-bold text-navy-800 flex items-center gap-1.5">
+                                <span class="w-1.5 h-4 bg-navy-800 rounded-full"></span>
+                                <span>現状の課題</span>
+                            </label>
+                            <textarea id="setup-det-challenge" rows="3" class="w-full rounded-2xl border border-slate-200 p-4 text-sm focus:border-navy-500 focus:ring-1 focus:ring-navy-500 outline-none transition-all resize-none" placeholder="例：業務を自分で抱え込みがちで、メンバーに適切にデリゲート（権限委譲）できていないこと。"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 3つの改善項目と具体的なアクションプラン -->
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        <h3 class="text-sm font-bold text-navy-800 flex items-center gap-1.5">
+                            <i data-lucide="list-checks" class="text-navy-600"></i>
+                            <span>3つの改善項目と具体的なアクションプラン</span>
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 gap-4">
+                            <!-- プラン1 -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                                <div class="md:col-span-1 space-y-1">
+                                    <span class="text-[10px] font-bold text-navy-600 uppercase tracking-wider">改善項目 1</span>
+                                    <input type="text" id="setup-det-item1" class="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs focus:border-navy-500 outline-none" placeholder="例：週次での1on1の実施と傾聴の徹底">
+                                </div>
+                                <div class="md:col-span-2 space-y-1">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">具体的なアクションプラン</span>
+                                    <input type="text" id="setup-det-action1" class="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs focus:border-navy-500 outline-none" placeholder="例：毎週火曜日の午前中に各メンバーと30分の1on1枠を確保し、相手の話を8割聴く姿勢で臨む。">
+                                </div>
+                            </div>
+                            <!-- プラン2 -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                                <div class="md:col-span-1 space-y-1">
+                                    <span class="text-[10px] font-bold text-navy-600 uppercase tracking-wider">改善項目 2</span>
+                                    <input type="text" id="setup-det-item2" class="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs focus:border-navy-500 outline-none" placeholder="例：業務の切り出しとデリゲートの仕組み化">
+                                </div>
+                                <div class="md:col-span-2 space-y-1">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">具体的なアクションプラン</span>
+                                    <input type="text" id="setup-det-action2" class="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs focus:border-navy-500 outline-none" placeholder="例：月曜日の朝に自分のタスクをリストアップし、他メンバーに任せられる業務を2つ以上選定して依頼する。">
+                                </div>
+                            </div>
+                            <!-- プラン3 -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                                <div class="md:col-span-1 space-y-1">
+                                    <span class="text-[10px] font-bold text-navy-600 uppercase tracking-wider">改善項目 3</span>
+                                    <input type="text" id="setup-det-item3" class="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs focus:border-navy-500 outline-none" placeholder="例：心理的安全性の高いチーム環境づくり">
+                                </div>
+                                <div class="md:col-span-2 space-y-1">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">具体的なアクションプラン</span>
+                                    <input type="text" id="setup-det-action3" class="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs focus:border-navy-500 outline-none" placeholder="例：朝会で「今日の感謝」を伝える時間を3分設け、メンバー同士のポジティブな関わりを促進する。">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 設定確定ボタン -->
+                <div class="flex justify-end pt-4 border-t border-slate-100">
+                    <button onclick="confirmSetup()" class="bg-gradient-to-r from-navy-800 to-navy-700 hover:from-navy-700 hover:to-navy-600 text-white font-bold px-8 py-3.5 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 group transform active:scale-95">
+                        <span>この内容でフォローアップを開始する</span>
+                        <i data-lucide="play" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- B. 運用中の受講生UI (appPhase === 'running') -->
+            <div id="student-running-view" class="space-y-6 hidden">
+                
+                <!-- B1. ライト伴走モード (運用中) -->
+                <div id="student-light-container" class="space-y-6 hidden">
+                    <!-- 今週のアクションプラン -->
+                    <div class="relative overflow-hidden bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-saffron-500 rounded-2xl p-6 shadow-premium transition-all">
+                        <div class="absolute right-4 top-4 opacity-10 text-saffron-600 pointer-events-none">
+                            <i data-lucide="lightbulb" class="w-24 h-24"></i>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 bg-saffron-100 text-saffron-700 rounded-xl">
+                                <i data-lucide="target" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-saffron-600 tracking-wider uppercase">今週のアクションプラン</span>
+                                <h3 class="text-lg font-bold text-slate-800 mt-1" id="student-light-action-text"></h3>
+                                <p class="text-xs text-slate-500 mt-1">毎週金曜日の夕方に振り返りを行います。アクションの実践度を記入してください。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 振り返り入力フォーム -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-slate-100/80 space-y-8 relative">
+                        <div class="border-b border-slate-100 pb-4">
+                            <h2 class="text-xl font-bold text-navy-800 flex items-center gap-2">
+                                <i data-lucide="pen-tool" class="text-navy-600"></i>
+                                <span>今週の振り返りを書く</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-1">自分の行動をポジティブに振り返り、次の成長に繋げましょう。</p>
+                        </div>
+
+                        <!-- 提出済みロックオーバーレイ -->
+                        <div id="student-light-locked-banner" class="hidden bg-emerald-50/90 border border-emerald-200 text-emerald-800 p-4 rounded-xl flex items-center gap-3">
+                            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
+                            <div>
+                                <p class="font-bold text-sm">振り返りシートは上司に提出済みです。</p>
+                                <p class="text-xs text-emerald-700">上司からのフィードバックをお待ちください。現在フォームは編集できません。</p>
+                            </div>
+                        </div>
+
+                        <form id="form-light" onsubmit="submitLight(event)" class="space-y-6">
+                            <!-- 行動量スライダー -->
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <label class="text-sm font-bold text-navy-800 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-4 bg-navy-800 rounded-full"></span>
+                                        <span>行動量（アクションの実践度）</span>
+                                    </label>
+                                    <span id="light-progress-val" class="text-lg font-extrabold text-navy-800">50%</span>
+                                </div>
+                                <div class="bg-navy-50/50 p-4 rounded-2xl border border-navy-100/50">
+                                    <input type="range" id="input-light-progress" min="0" max="100" value="50" oninput="updateProgressVal(this.value)" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-navy-800">
+                                    <div class="flex justify-between text-[10px] text-slate-400 mt-2 px-1">
+                                        <span>全くできなかった (0%)</span>
+                                        <span>半分くらいできた (50%)</span>
+                                        <span>完璧にやり遂げた！ (100%)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 手応え -->
+                            <div class="space-y-3">
+                                <label class="text-sm font-bold text-navy-800 flex items-center gap-1.5">
+                                    <span class="w-1.5 h-4 bg-navy-800 rounded-full"></span>
+                                    <span>今週の手応え（実感）</span>
+                                </label>
+                                <div class="grid grid-cols-5 gap-2 sm:gap-4">
+                                    <label class="feeling-btn cursor-pointer group">
+                                        <input type="radio" name="feeling" value="😀" class="sr-only" required>
+                                        <div class="p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 hover:bg-white text-center transition-all duration-200 group-hover:border-navy-300 flex flex-col items-center gap-1">
+                                            <span class="text-3xl filter saturate-75 group-hover:scale-110 transition-transform">😀</span>
+                                            <span class="text-[10px] sm:text-xs font-medium text-slate-500">大満足</span>
+                                        </div>
+                                    </label>
+                                    <label class="feeling-btn cursor-pointer group">
+                                        <input type="radio" name="feeling" value="🙂" class="sr-only">
+                                        <div class="p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 hover:bg-white text-center transition-all duration-200 group-hover:border-navy-300 flex flex-col items-center gap-1">
+                                            <span class="text-3xl filter saturate-75 group-hover:scale-110 transition-transform">🙂</span>
+                                            <span class="text-[10px] sm:text-xs font-medium text-slate-500">満足</span>
+                                        </div>
+                                    </label>
+                                    <label class="feeling-btn cursor-pointer group">
+                                        <input type="radio" name="feeling" value="😐" class="sr-only">
+                                        <div class="p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 hover:bg-white text-center transition-all duration-200 group-hover:border-navy-300 flex flex-col items-center gap-1">
+                                            <span class="text-3xl filter saturate-75 group-hover:scale-110 transition-transform">😐</span>
+                                            <span class="text-[10px] sm:text-xs font-medium text-slate-500">ふつう</span>
+                                        </div>
+                                    </label>
+                                    <label class="feeling-btn cursor-pointer group">
+                                        <input type="radio" name="feeling" value="🙁" class="sr-only">
+                                        <div class="p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 hover:bg-white text-center transition-all duration-200 group-hover:border-navy-300 flex flex-col items-center gap-1">
+                                            <span class="text-3xl filter saturate-75 group-hover:scale-110 transition-transform">🙁</span>
+                                            <span class="text-[10px] sm:text-xs font-medium text-slate-500">やや不満</span>
+                                        </div>
+                                    </label>
+                                    <label class="feeling-btn cursor-pointer group">
+                                        <input type="radio" name="feeling" value="😢" class="sr-only">
+                                        <div class="p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 hover:bg-white text-center transition-all duration-200 group-hover:border-navy-300 flex flex-col items-center gap-1">
+                                            <span class="text-3xl filter saturate-75 group-hover:scale-110 transition-transform">😢</span>
+                                            <span class="text-[10px] sm:text-xs font-medium text-slate-500">苦戦</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 一言メモ -->
+                            <div class="space-y-3">
+                                <label for="input-light-memo" class="text-sm font-bold text-navy-800 flex items-center gap-1.5">
+                                    <span class="w-1.5 h-4 bg-navy-800 rounded-full"></span>
+                                    <span>一言メモ（気づきや相談ごと）</span>
+                                </label>
+                                <textarea id="input-light-memo" rows="3" class="w-full rounded-2xl border border-slate-200 p-4 text-sm focus:border-navy-500 focus:ring-1 focus:ring-navy-500 outline-none transition-all resize-none" placeholder="やってみて感じた難しさや、上司に相談したいことを自由に書いてみましょう。"></textarea>
+                            </div>
+
+                            <!-- 送信ボタン -->
+                            <div class="flex justify-end pt-4" id="light-submit-btn-area">
+                                <button type="submit" class="bg-gradient-to-r from-navy-800 to-navy-700 hover:from-navy-700 hover:to-navy-600 text-white font-bold px-8 py-3 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 group transform active:scale-95">
+                                    <span>上司に提出する</span>
+                                    <i data-lucide="send" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 上司フィードバック -->
+                    <div id="student-light-feedback-card" class="hidden bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-saffron-100 relative overflow-hidden">
+                        <div class="absolute right-0 top-0 w-32 h-32 bg-gradient-to-bl from-saffron-500/10 to-transparent pointer-events-none"></div>
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 bg-saffron-50 text-saffron-600 rounded-2xl relative">
+                                <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i>
+                            </div>
+                            <div class="flex-grow space-y-4">
+                                <div>
+                                    <h3 class="text-md font-bold text-slate-800">上司からの温かいフィードバック</h3>
+                                    <p class="text-xs text-slate-400 mt-0.5">メンター：佐藤部長より</p>
+                                </div>
+                                <div class="flex items-center gap-6 bg-saffron-50/50 p-4 rounded-2xl border border-saffron-100/50">
+                                    <div id="feedback-stamp-spot" class="relative w-20 h-20 bg-white rounded-full shadow-inner flex items-center justify-center border border-slate-100"></div>
+                                    <div>
+                                        <span class="text-xs font-bold text-saffron-600">受け取ったスタンプ</span>
+                                        <h4 id="feedback-stamp-text" class="text-base font-extrabold text-navy-800 mt-1">まだリアクションがありません</h4>
+                                        <p class="text-xs text-slate-500 mt-1">上司があなたの振り返りを見てスタンプを送ってくれました！</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- B2. じっくりシートモード (運用中 - 3ヶ月縦型タイムライン) -->
+                <div id="student-detailed-container" class="space-y-6 hidden">
+                    
+                    <!-- 上部固定目標エリア -->
+                    <div class="bg-gradient-to-r from-navy-900 to-navy-800 text-white rounded-3xl p-6 sm:p-8 shadow-premium border border-navy-700/30 relative">
+                        <div class="absolute right-6 top-6 opacity-5 text-white pointer-events-none">
+                            <i data-lucide="shield-check" class="w-32 h-32"></i>
+                        </div>
+                        <div class="border-b border-white/10 pb-4 mb-6">
+                            <span class="text-xs font-bold text-saffron-300 tracking-wider uppercase font-semibold">3ヶ月振り返り設計</span>
+                            <h2 class="text-xl font-bold mt-1">じっくりシート：目標と課題</h2>
+                            <p class="text-xs text-navy-200 mt-1">この3ヶ月で目指す方向性として初期設定した内容です。</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white/5 p-5 rounded-2xl border border-white/10 flex items-start gap-3">
+                                <div class="p-2 bg-saffron-500/20 text-saffron-300 rounded-lg">
+                                    <i data-lucide="compass" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-saffron-300">目指すリーダー像</h4>
+                                    <p class="text-sm font-medium mt-1 text-slate-100" id="detailed-fixed-vision"></p>
+                                </div>
+                            </div>
+                            <div class="bg-white/5 p-5 rounded-2xl border border-white/10 flex items-start gap-3">
+                                <div class="p-2 bg-red-500/20 text-red-300 rounded-lg">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-red-300">現状の課題</h4>
+                                    <p class="text-sm font-medium mt-1 text-slate-100" id="detailed-fixed-challenge"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 中段: アクションプラン一覧表 -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-slate-100/80 space-y-4">
+                        <div>
+                            <h3 class="text-md font-bold text-navy-800 flex items-center gap-2">
+                                <i data-lucide="list-todo" class="w-5 h-5 text-navy-600"></i>
+                                <span>3つの改善項目とアクションプラン</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">目指すリーダー像を実現するための実行アクション</p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden text-sm">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-1/3">改善項目</th>
+                                        <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-2/3">具体的なアクションプラン</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailed-plans-tbody" class="bg-white divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 3ヶ月縦型振り返りタイムライン (受講生) -->
+                    <div class="space-y-6" id="student-detailed-timeline">
+                        <!-- JavaScriptで各月 (1, 2, 3) の振り返りカードが動的に生成されます -->
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ==============================================
+             上司画面
+             ============================================== -->
+        <section id="view-boss" class="space-y-6 hidden">
+            
+            <!-- 提出前プレースホルダー -->
+            <div id="boss-placeholder" class="bg-white rounded-3xl p-12 text-center shadow-premium border border-slate-100 flex flex-col items-center justify-center space-y-4">
+                <div class="w-20 h-20 rounded-full bg-navy-50 text-navy-500 flex items-center justify-center float-anim">
+                    <i data-lucide="hourglass" class="w-10 h-10"></i>
+                </div>
+                <div class="max-w-md">
+                    <h3 class="text-lg font-bold text-navy-800">受講生からの提出を待っています...</h3>
+                    <p class="text-sm text-slate-500 mt-2">受講生（山田太郎さん）が該当する期間の振り返りシートを提出すると、ここにリアルタイムに反映され、評価やフィードバックが行えるようになります。</p>
+                </div>
+            </div>
+
+            <!-- A. ライト伴走モード時の上司操作画面 -->
+            <div id="boss-light-container" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- 左側: ダッシュボード表示 -->
+                    <div class="lg:col-span-2 bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-slate-100 space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                            <span class="text-xs font-bold text-saffron-600 bg-saffron-50 px-2 py-0.5 rounded border border-saffron-100">ライト伴走</span>
+                            <h2 class="text-xl font-bold text-navy-800 mt-2 flex items-center gap-2">
+                                <i data-lucide="user-check" class="text-navy-600"></i>
+                                <span>山田太郎さんの今週の提出内容</span>
+                            </h2>
+                        </div>
+
+                        <!-- アクションプラン -->
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <span class="text-[10px] font-bold text-slate-400 tracking-wider">取り組んだアクションプラン</span>
+                            <p class="text-sm font-bold text-slate-700 mt-1" id="boss-light-action-display"></p>
+                        </div>
+
+                        <!-- 実践ダッシュボード -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-navy-50/40 p-5 rounded-2xl border border-navy-100/50 flex items-center justify-between">
+                                <div class="space-y-1">
+                                    <span class="text-xs font-semibold text-navy-600">アクション実践度（行動量）</span>
+                                    <h4 class="text-3xl font-extrabold text-navy-800" id="boss-light-progress-val">50%</h4>
+                                </div>
+                                <div class="w-20 bg-slate-200 h-3 rounded-full overflow-hidden">
+                                    <div id="boss-light-progress-bar" class="bg-navy-800 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-saffron-50/30 p-5 rounded-2xl border border-saffron-100/50 flex items-center gap-4">
+                                <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center text-4xl shadow-sm border border-saffron-100" id="boss-light-feeling-emoji">😐</div>
+                                <div>
+                                    <span class="text-xs font-semibold text-saffron-600">今週の本人の手応え</span>
+                                    <h4 class="text-md font-bold text-navy-800 mt-0.5" id="boss-light-feeling-text">ふつう</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400">本人からのメッセージ・気づき</label>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm leading-relaxed text-slate-700 min-h-[80px]" id="boss-light-memo"></div>
+                        </div>
+                    </div>
+
+                    <!-- 右側: ワンクリック伴走 -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-saffron-100/50 space-y-6 flex flex-col justify-between">
+                        <div class="space-y-4">
+                            <div class="border-b border-slate-100 pb-4">
+                                <h3 class="text-md font-bold text-navy-800 flex items-center gap-1.5">
+                                    <i data-lucide="smile" class="text-saffron-500"></i>
+                                    <span>ワンクリック伴走</span>
+                                </h3>
+                                <p class="text-xs text-slate-400 mt-0.5">本人の努力を承認し、背中を押すスタンプを1クリックで即時送付できます。</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-3" id="quick-stamp-group">
+                                <button onclick="sendStamp('よくやった！', '👍')" class="stamp-btn group relative overflow-hidden bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold p-4 rounded-2xl transition-all duration-300 flex items-center justify-between shadow-sm hover:shadow transform hover:-translate-y-0.5 active:translate-y-0">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl group-hover:animate-bounce">👍</span>
+                                        <span class="text-sm">よくやった！</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-emerald-400 group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                                <button onclick="sendStamp('その調子！', '✨')" class="stamp-btn group relative overflow-hidden bg-saffron-50 hover:bg-saffron-100 border border-saffron-200 text-saffron-800 font-bold p-4 rounded-2xl transition-all duration-300 flex items-center justify-between shadow-sm hover:shadow transform hover:-translate-y-0.5 active:translate-y-0">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl group-hover:animate-bounce">✨</span>
+                                        <span class="text-sm">その調子！</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-saffron-400 group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                                <button onclick="sendStamp('次がんばろう', '🔥')" class="stamp-btn group relative overflow-hidden bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 font-bold p-4 rounded-2xl transition-all duration-300 flex items-center justify-between shadow-sm hover:shadow transform hover:-translate-y-0.5 active:translate-y-0">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl group-hover:animate-bounce">🔥</span>
+                                        <span class="text-sm">次がんばろう</span>
+                                    </div>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-sky-400 group-hover:translate-x-1 transition-transform"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="boss-light-done-indicator" class="hidden mt-6 bg-slate-50 border border-slate-100 p-4 rounded-2xl text-center">
+                            <span class="text-xs font-bold text-slate-500">スタンプフィードバック送信完了！</span>
+                            <p class="text-[10px] text-slate-400 mt-1">受講生へリアルタイムに伝わりました。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- B. じっくりシートモード時の上司操作タイムライン -->
+            <div id="boss-detailed-container" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- 3ヶ月タイムライン -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-slate-100 space-y-6">
+                            <div class="border-b border-slate-100 pb-4">
+                                <span class="text-xs font-bold text-navy-600 bg-navy-50 px-2 py-0.5 rounded border border-navy-200">じっくりシート</span>
+                                <h2 class="text-xl font-bold text-navy-800 mt-2 flex items-center gap-2">
+                                    <i data-lucide="calendar" class="text-navy-600"></i>
+                                    <span>育成伴走タイムライン（3ヶ月）</span>
+                                </h2>
+                            </div>
+
+                            <div class="relative pl-6 sm:pl-8 border-l-2 border-slate-100 space-y-8 ml-2" id="boss-detailed-timeline">
+                                <!-- JSで上司用タイムラインカードが動的に挿入されます -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右側: フィードバックの視点ガイド -->
+                    <div class="space-y-6">
+                        <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-saffron-200 rounded-3xl p-6 sm:p-8 shadow-premium space-y-4">
+                            <h3 class="text-md font-bold text-slate-800 flex items-center gap-1.5">
+                                <i data-lucide="award" class="text-saffron-500"></i>
+                                <span>フィードバックの視点ガイド</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 leading-relaxed">部下の自発性と成長力を育むための、フィードバックのベストプラクティスです。コメント作成の参考にしてください。</p>
+                            
+                            <ul class="space-y-3.5 text-xs text-slate-700">
+                                <li class="flex items-start gap-2">
+                                    <span class="p-1 bg-saffron-100 text-saffron-700 rounded-md mt-0.5 font-bold text-[10px] w-5 h-5 flex items-center justify-center">1</span>
+                                    <div>
+                                        <strong class="font-bold text-slate-800">今回の行動の事実を褒める</strong>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">「できたこと」の事実にフォーカスし、小さな前進を肯定します。</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="p-1 bg-saffron-100 text-saffron-700 rounded-md mt-0.5 font-bold text-[10px] w-5 h-5 flex items-center justify-center">2</span>
+                                    <div>
+                                        <strong class="font-bold text-slate-800">次回への改善点を一緒に考える</strong>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">指示命令ではなく、「どうすればより良くなるか」問いかけで気づきを促します。</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="p-1 bg-saffron-100 text-saffron-700 rounded-md mt-0.5 font-bold text-[10px] w-5 h-5 flex items-center justify-center">3</span>
+                                    <div>
+                                        <strong class="font-bold text-slate-800">心理的安全性と期待を伝える</strong>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">「挑戦しているプロセス自体が価値」であることを伝え、応援します。</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==============================================
+             人事画面
+             ============================================== -->
+        <section id="view-hr" class="space-y-6 hidden">
+            
+            <!-- 上部サマリーカード -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="hr-summary-cards">
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-premium flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-semibold">全体の受講生数</span>
+                        <h4 class="text-2xl font-extrabold text-navy-800 mt-1">1名 <span class="text-xs font-normal text-slate-500">(デモ)</span></h4>
+                    </div>
+                    <div class="p-3 bg-navy-50 text-navy-600 rounded-xl">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-premium flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-semibold">完了フェーズ</span>
+                        <h4 class="text-2xl font-extrabold text-mint-600 mt-1" id="hr-stat-completed">0名</h4>
+                    </div>
+                    <div class="p-3 bg-mint-50 text-mint-600 rounded-xl">
+                        <i data-lucide="check-circle" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-premium flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-semibold">上司確認中 / 保留</span>
+                        <h4 class="text-2xl font-extrabold text-saffron-600 mt-1" id="hr-stat-waiting">0名</h4>
+                    </div>
+                    <div class="p-3 bg-saffron-50 text-saffron-600 rounded-xl">
+                        <i data-lucide="clock" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-premium flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-slate-400 font-semibold">提出待ち</span>
+                        <h4 class="text-2xl font-extrabold text-slate-500 mt-1" id="hr-stat-unsubmitted">1名</h4>
+                    </div>
+                    <div class="p-3 bg-slate-50 text-slate-400 rounded-xl">
+                        <i data-lucide="slash" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 進捗リスト ＆ データ出力コントロール -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-slate-100 space-y-6">
+                
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-navy-800 flex items-center gap-2">
+                            <i data-lucide="gantt-chart" class="text-navy-600"></i>
+                            <span>受講生の提出・伴走状況一覧</span>
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">人事管理者として、社内メンバーのフォローアップ進捗をリアルタイムに把握できます。</p>
+                    </div>
+
+                    <!-- エクセル出力ダミーボタン -->
+                    <button onclick="startDummyExcelExport()" class="bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all duration-300 flex items-center gap-2 text-xs group transform active:scale-95">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-100"></i>
+                        <span>じっくりシートをExcel出力する</span>
+                    </button>
+                </div>
+
+                <!-- 受講生一覧テーブル -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-100 text-sm">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">氏名</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">所属部署</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">現在選択モード</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">進捗ステータス</th>
+                                <th class="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider text-right">最終連動時刻</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-navy-800 text-white flex items-center justify-center font-bold text-xs">山</div>
+                                        <div>
+                                            <div class="text-sm font-bold text-slate-800">山田 太郎</div>
+                                            <div class="text-[10px] text-slate-400">営業第二グループ / 入社2年目</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-slate-600 text-xs font-medium">営業第二グループ</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span id="hr-table-mode" class="text-xs bg-navy-50 text-navy-800 border border-navy-100 px-2 py-0.5 rounded-full font-bold">ライト伴走</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span id="hr-table-status" class="px-2.5 py-1 rounded-full text-xs font-bold">初期設定中</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-xs text-slate-400" id="hr-table-time">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-white border-t border-slate-100 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-400">
+            <p>© 2026 コネクト・フォローアップ. 人の成長に伴走する対話型LMSモックアップ</p>
+            <p class="mt-1">Designed by Senior UI/UX Designer & Frontend Engineer</p>
+        </div>
+    </footer>
+
+    <!-- ==============================================
+         トースト通知・ポップアップ要素
+         ============================================== -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 z-50 transform translate-y-full opacity-0 transition-all duration-300">
+        <i data-lucide="info" class="w-4 h-4 text-saffron-300" id="toast-icon"></i>
+        <span id="toast-message" class="font-medium">通知メッセージが入ります。</span>
+    </div>
+
+    <!-- ダミーExcel出力モーダル -->
+    <div id="excel-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-slate-100 flex flex-col items-center text-center space-y-6 transform scale-95 transition-transform duration-300" id="excel-modal-card">
+            
+            <div id="excel-loading-spinner" class="flex flex-col items-center space-y-3">
+                <div class="relative w-16 h-16">
+                    <div class="absolute inset-0 rounded-full border-4 border-slate-100"></div>
+                    <div class="absolute inset-0 rounded-full border-4 border-t-emerald-600 animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-emerald-600">
+                        <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-navy-800">Excel出力用データを集計中...</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">これまでに登録された振り返りとフィードバック履歴を抽出しています。</p>
+                </div>
+            </div>
+
+            <div id="excel-complete-view" class="hidden flex flex-col items-center space-y-4 w-full">
+                <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center animate-bounce">
+                    <i data-lucide="check" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h3 class="text-md font-bold text-navy-800">Excelシートの出力が完了しました！</h3>
+                    <p class="text-xs text-slate-500 mt-1">「LMS_Report_山田太郎.xlsx」をダウンロードしました。</p>
+                    <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mt-3 text-[10px] text-emerald-800 text-left w-full">
+                        <strong>📊 収録されたデータ:</strong>
+                        <ul id="excel-collected-data-list" class="list-disc list-inside mt-1 space-y-0.5"></ul>
+                    </div>
+                </div>
+                <button onclick="closeExcelModal()" class="w-full bg-navy-800 hover:bg-navy-700 text-white font-bold py-2 rounded-xl text-xs transition-colors shadow-sm">
+                    閉じる
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==============================================
+         JavaScript: 状態管理 & リアルタイム連動
+         ============================================== -->
+    <script>
+        // --- 1. グローバルState設計 ---
+        const state = {
+            appPhase: 'setup', // 'setup' (初期設定中) | 'running' (運用中)
+            currentMode: 'light', // 'light' (ライト伴走) | 'detailed' (じっくりシート)
+            currentUser: 'student', // 'student' (受講生) | 'boss' (上司) | 'hr' (人事)
+            
+            // 初期設定パラメータ
+            setup: {
+                cycle: 'weekly',
+                duration: '3'
+            },
+            
+            // ライト伴走モードデータ
+            lightMode: {
+                action: "", // 初期設定時に動的入力
+                submitted: false,
+                progress: 50,
+                feeling: "", 
+                memo: "",
+                bossFeedback: {
+                    stamp: null, 
+                    emoji: ""
+                },
+                status: "初期設定中" // '初期設定中' | '未提出' | '上司確認待ち' | '完了'
+            },
+            
+            // じっくりシートモードデータ (3ヶ月段階的ロック解除)
+            detailedMode: {
+                fixed: {
+                    vision: "",
+                    reason: "",
+                    challenge: ""
+                },
+                plans: [
+                    { item: "", action: "" },
+                    { item: "", action: "" },
+                    { item: "", action: "" }
+                ],
+                currentMonth: 1, // 現在のアクティブ月 (1 -> 2 -> 3)
+                months: {
+                    1: {
+                        submitted: false,
+                        done: "",
+                        failed: "",
+                        improvements: "",
+                        changePlan: "keep",
+                        memo: "",
+                        bossFeedback: { comment: "", confirmed: false }
+                    },
+                    2: {
+                        submitted: false,
+                        done: "",
+                        failed: "",
+                        improvements: "",
+                        changePlan: "keep",
+                        memo: "",
+                        bossFeedback: { comment: "", confirmed: false }
+                    },
+                    3: {
+                        submitted: false,
+                        done: "",
+                        failed: "",
+                        improvements: "",
+                        changePlan: "keep",
+                        memo: "",
+                        bossFeedback: { comment: "", confirmed: false }
+                    }
+                },
+                status: "初期設定中" // '初期設定中' | '1ヶ月目提出待ち' | '1ヶ月目上司確認中' | '2ヶ月目提出待ち' | '2ヶ月目上司確認中' | '3ヶ月目提出待ち' | '3ヶ月目上司確認中' | '完了'
+            }
+        };
+
+        // --- 2. 初期化処理 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+            setupFeelingRadioListeners();
+        });
+
+        // 絵文字ラジオボタンの選択時の視覚効果セットアップ
+        function setupFeelingRadioListeners() {
+            const btns = document.querySelectorAll('.feeling-btn');
+            btns.forEach(btn => {
+                const radio = btn.querySelector('input[type="radio"]');
+                btn.addEventListener('click', () => {
+                    btns.forEach(b => {
+                        const div = b.querySelector('div');
+                        div.className = "p-4 rounded-2xl border-2 border-slate-100 bg-slate-50 hover:bg-white text-center transition-all duration-200 group-hover:border-navy-300 flex flex-col items-center gap-1";
+                    });
+                    
+                    const innerDiv = btn.querySelector('div');
+                    innerDiv.className = "p-4 rounded-2xl border-2 border-navy-800 bg-navy-50 text-center transition-all duration-200 flex flex-col items-center gap-1 scale-105 shadow-sm";
+                    
+                    if (state.currentUser === 'student' && !state.lightMode.submitted) {
+                        state.lightMode.feeling = radio.value;
+                    }
+                });
+            });
+        }
+
+        // --- 3. コントローラーによる切り替え ---
+
+        // モード切り替え
+        function switchMode(mode) {
+            state.currentMode = mode;
+            
+            const btnLight = document.getElementById('btn-mode-light');
+            const btnDetailed = document.getElementById('btn-mode-detailed');
+            const activeStyle = "px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 bg-navy-800 text-white shadow-sm";
+            const inactiveStyle = "px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 text-navy-400 hover:text-white hover:bg-navy-900/30";
+
+            if (mode === 'light') {
+                btnLight.className = activeStyle;
+                btnDetailed.className = inactiveStyle;
+            } else {
+                btnLight.className = inactiveStyle;
+                btnDetailed.className = activeStyle;
+            }
+
+            showToast(`モードを「${mode === 'light' ? 'ライト伴走' : 'じっくりシート'}」に切り替えました。`);
+            render();
+        }
+
+        // ユーザー（ロール）切り替え
+        function switchUser(user) {
+            state.currentUser = user;
+            
+            const btnStudent = document.getElementById('btn-user-student');
+            const btnBoss = document.getElementById('btn-user-boss');
+            const btnHr = document.getElementById('btn-user-hr');
+            const activeClass = "px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 bg-white text-navy-800 shadow-md font-bold";
+            const inactiveClass = "px-4 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 text-white/70 hover:text-white hover:bg-white/10";
+
+            btnStudent.className = user === 'student' ? activeClass : inactiveClass;
+            btnBoss.className = user === 'boss' ? activeClass : inactiveClass;
+            btnHr.className = user === 'hr' ? activeClass : inactiveClass;
+
+            showToast(`操作ユーザーを「${user === 'student' ? '受講生' : user === 'boss' ? '上司（佐藤部長）' : '人事管理者'}」に切り替えました。`);
+            render();
+        }
+
+        // スライダー連動
+        function updateProgressVal(val) {
+            document.getElementById('light-progress-val').textContent = val + "%";
+            if (!state.lightMode.submitted) {
+                state.lightMode.progress = parseInt(val);
+            }
+        }
+
+        // 初期設定時の入力フォームの表示トグル
+        function toggleSetupInputs(mode) {
+            const lightDiv = document.getElementById('setup-inputs-light');
+            const detailedDiv = document.getElementById('setup-inputs-detailed');
+            const labelLight = document.getElementById('setup-mode-light-label');
+            const labelDetailed = document.getElementById('setup-mode-detailed-label');
+            const dotLight = document.getElementById('setup-radio-light-dot').firstElementChild;
+            const dotDetailed = document.getElementById('setup-radio-detailed-dot').firstElementChild;
+
+            if (mode === 'light') {
+                lightDiv.classList.remove('hidden');
+                detailedDiv.classList.add('hidden');
+                labelLight.classList.add('border-2', 'border-navy-800');
+                labelLight.classList.remove('border-slate-200');
+                labelDetailed.classList.remove('border-2', 'border-navy-800');
+                labelDetailed.classList.add('border-slate-200');
+                dotLight.classList.remove('hidden');
+                dotDetailed.classList.add('hidden');
+            } else {
+                lightDiv.classList.add('hidden');
+                detailedDiv.classList.remove('hidden');
+                labelLight.classList.remove('border-2', 'border-navy-800');
+                labelLight.classList.add('border-slate-200');
+                labelDetailed.classList.add('border-2', 'border-navy-800');
+                labelDetailed.classList.remove('border-slate-200');
+                dotLight.classList.add('hidden');
+                dotDetailed.classList.remove('hidden');
+            }
+        }
+
+        // --- 4. 初期設定の確定処理 ---
+        function confirmSetup() {
+            const selectedMode = document.querySelector('input[name="setup-mode"]:checked').value;
+            const cycle = document.getElementById('setup-cycle').value;
+            const duration = document.getElementById('setup-duration').value;
+
+            state.setup.cycle = cycle;
+            state.setup.duration = duration;
+            state.currentMode = selectedMode;
+
+            if (selectedMode === 'light') {
+                const action = document.getElementById('setup-light-action').value.trim();
+                if (!action) {
+                    showToast("今週の小さなアクションを入力してください！", true);
+                    return;
+                }
+                state.lightMode.action = action;
+                state.lightMode.status = "未提出";
+            } else {
+                const vision = document.getElementById('setup-det-vision').value.trim();
+                const challenge = document.getElementById('setup-det-challenge').value.trim();
+                const item1 = document.getElementById('setup-det-item1').value.trim();
+                const action1 = document.getElementById('setup-det-action1').value.trim();
+                const item2 = document.getElementById('setup-det-item2').value.trim();
+                const action2 = document.getElementById('setup-det-action2').value.trim();
+                const item3 = document.getElementById('setup-det-item3').value.trim();
+                const action3 = document.getElementById('setup-det-action3').value.trim();
+
+                if (!vision || !challenge || !item1 || !action1 || !item2 || !action2 || !item3 || !action3) {
+                    showToast("じっくりシートのすべての目標・プラン項目を入力してください！", true);
+                    return;
+                }
+
+                state.detailedMode.fixed.vision = vision;
+                state.detailedMode.fixed.challenge = challenge;
+                state.detailedMode.plans = [
+                    { item: item1, action: action1 },
+                    { item: item2, action: action2 },
+                    { item: item3, action: action3 }
+                ];
+                state.detailedMode.status = "1ヶ月目提出待ち";
+                state.detailedMode.currentMonth = 1;
+            }
+
+            // 運用フェーズに移行
+            state.appPhase = 'running';
+            showToast("初期設定が完了しました！フォローアップ運用フェーズを開始します。");
+            
+            // トップのヘッダー側モード表示もStateに合わせて強制同期
+            switchMode(selectedMode);
+        }
+
+        // --- 5. 描画・更新コアロジック (Render) ---
+        function render() {
+            // モード表示コントローラー全体の非表示・表示制御 (初期設定時は非表示にすることでUX向上)
+            const modeWrapper = document.getElementById('mode-selector-wrapper');
+            if (state.appPhase === 'setup') {
+                modeWrapper.classList.add('opacity-40', 'pointer-events-none');
+            } else {
+                modeWrapper.classList.remove('opacity-40', 'pointer-events-none');
+            }
+
+            // 現在のモードとユーザーをガイドに反映
+            const modeName = state.currentMode === 'light' ? 'ライト伴走モード' : 'じっくりシートモード';
+            const userName = state.currentUser === 'student' ? '受講生' : state.currentUser === 'boss' ? '上司（佐藤部長）' : '人事';
+            document.getElementById('guide-mode-name').textContent = modeName;
+            document.getElementById('guide-user-name').textContent = userName;
+
+            // ステータスバッジの更新
+            const currentStatus = state.currentMode === 'light' ? state.lightMode.status : state.detailedMode.status;
+            const badge = document.getElementById('current-status-badge');
+            badge.textContent = currentStatus;
+            
+            if (currentStatus === '初期設定中') {
+                badge.className = "px-3 py-1 rounded-full font-bold bg-amber-100 text-amber-700 border border-amber-200 animate-pulse";
+            } else if (currentStatus === '未提出' || currentStatus.includes('提出待ち')) {
+                badge.className = "px-3 py-1 rounded-full font-bold bg-slate-100 text-slate-600 border border-slate-200";
+            } else if (currentStatus === '上司確認待ち' || currentStatus.includes('上司確認中')) {
+                badge.className = "px-3 py-1 rounded-full font-bold bg-saffron-100 text-saffron-700 border border-saffron-200 animate-pulse";
+            } else if (currentStatus === '完了') {
+                badge.className = "px-3 py-1 rounded-full font-bold bg-mint-100 text-mint-700 border border-mint-200";
+            }
+
+            // 上司通知バッジ制御
+            const bossBadge = document.getElementById('boss-badge');
+            const bossBadgeSolid = document.getElementById('boss-badge-solid');
+            if ((currentStatus === '上司確認待ち' || currentStatus.includes('上司確認中')) && state.currentUser !== 'boss') {
+                bossBadge.classList.remove('hidden');
+                bossBadgeSolid.classList.remove('hidden');
+            } else {
+                bossBadge.classList.add('hidden');
+                bossBadgeSolid.classList.add('hidden');
+            }
+
+            // すべての表示エリアを隠す
+            document.getElementById('setup-waiting-placeholder').classList.add('hidden');
+            document.getElementById('view-student').classList.add('hidden');
+            document.getElementById('view-boss').classList.add('hidden');
+            document.getElementById('view-hr').classList.add('hidden');
+
+            // 【初期設定完了前ロック】上司・人事でかつ初期設定中のとき、プレースホルダーを表示
+            if (state.appPhase === 'setup' && state.currentUser !== 'student') {
+                document.getElementById('setup-waiting-placeholder').classList.remove('hidden');
+            } else {
+                if (state.currentUser === 'student') {
+                    renderStudentView();
+                } else if (state.currentUser === 'boss') {
+                    renderBossView();
+                } else if (state.currentUser === 'hr') {
+                    renderHrView();
+                }
+            }
+
+            lucide.createIcons();
+        }
+
+        // A. 受講生画面のレンダリング
+        function renderStudentView() {
+            document.getElementById('view-student').classList.remove('hidden');
+
+            const setupView = document.getElementById('student-setup-view');
+            const runningView = document.getElementById('student-running-view');
+
+            if (state.appPhase === 'setup') {
+                setupView.classList.remove('hidden');
+                runningView.classList.add('hidden');
+            } else {
+                setupView.classList.add('hidden');
+                runningView.classList.remove('hidden');
+                
+                if (state.currentMode === 'light') {
+                    document.getElementById('student-light-container').classList.remove('hidden');
+                    document.getElementById('student-detailed-container').classList.add('hidden');
+                    
+                    const data = state.lightMode;
+                    document.getElementById('student-light-action-text').textContent = `「${data.action}」`;
+
+                    const form = document.getElementById('form-light');
+                    const lockBanner = document.getElementById('student-light-locked-banner');
+                    const submitBtnArea = document.getElementById('light-submit-btn-area');
+                    const feedbackCard = document.getElementById('student-light-feedback-card');
+
+                    if (data.submitted) {
+                        lockBanner.classList.remove('hidden');
+                        submitBtnArea.classList.add('hidden');
+                        document.getElementById('input-light-progress').disabled = true;
+                        document.getElementById('input-light-memo').disabled = true;
+                        form.querySelectorAll('input[name="feeling"]').forEach(radio => radio.disabled = true);
+                        
+                        if (data.bossFeedback.stamp) {
+                            feedbackCard.classList.remove('hidden');
+                            const spot = document.getElementById('feedback-stamp-spot');
+                            spot.innerHTML = `
+                                <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-2 text-slate-800 font-extrabold text-[11px] leading-tight select-none border-4 border-dashed border-saffron-500 rounded-full stamp-applied bg-amber-50">
+                                    <span class="text-2xl">${data.bossFeedback.emoji}</span>
+                                    <span>${data.bossFeedback.stamp}</span>
+                                </div>
+                            `;
+                            document.getElementById('feedback-stamp-text').textContent = `「${data.bossFeedback.stamp}」を受け取りました！`;
+                            document.getElementById('feedback-stamp-text').className = "text-base font-extrabold text-saffron-600 mt-1";
+                        } else {
+                            feedbackCard.classList.add('hidden');
+                        }
+                    } else {
+                        lockBanner.classList.add('hidden');
+                        submitBtnArea.classList.remove('hidden');
+                        feedbackCard.classList.add('hidden');
+                        document.getElementById('input-light-progress').disabled = false;
+                        document.getElementById('input-light-memo').disabled = false;
+                        form.querySelectorAll('input[name="feeling"]').forEach(radio => radio.disabled = false);
+
+                        document.getElementById('input-light-progress').value = data.progress;
+                        document.getElementById('light-progress-val').textContent = data.progress + "%";
+                        document.getElementById('input-light-memo').value = data.memo;
+                    }
+                } else {
+                    document.getElementById('student-light-container').classList.add('hidden');
+                    document.getElementById('student-detailed-container').classList.remove('hidden');
+
+                    // じっくりシート目標情報の反映
+                    document.getElementById('detailed-fixed-vision').textContent = state.detailedMode.fixed.vision;
+                    document.getElementById('detailed-fixed-challenge').textContent = state.detailedMode.fixed.challenge;
+
+                    const tbody = document.getElementById('detailed-plans-tbody');
+                    tbody.innerHTML = '';
+                    state.detailedMode.plans.forEach(plan => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-navy-800 bg-navy-50/30 flex items-center gap-1.5 border-r border-slate-100">
+                                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-navy-600"></i>
+                                <span>${plan.item}</span>
+                            </td>
+                            <td class="px-6 py-4 text-xs text-slate-600 leading-relaxed font-medium">
+                                ${plan.action}
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    // 3ヶ月のタイムライン表示 (受講生)
+                    renderDetailedTimelineStudent();
+                }
+            }
+        }
+
+        // じっくり：受講生タイムラインUIの描画
+        function renderDetailedTimelineStudent() {
+            const container = document.getElementById('student-detailed-timeline');
+            container.innerHTML = '';
+            const curr = state.detailedMode.currentMonth;
+
+            for (let m = 1; m <= 3; m++) {
+                const mData = state.detailedMode.months[m];
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-3xl p-6 sm:p-8 shadow-premium border border-slate-100/80 relative overflow-hidden";
+                
+                // 未来の月 (ロック中) の表示
+                if (m > curr) {
+                    card.innerHTML = `
+                        <!-- ロック中のオーバーレイ -->
+                        <div class="absolute inset-0 bg-slate-100/50 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center select-none">
+                            <div class="bg-white/95 p-4 rounded-2xl shadow-premium border border-slate-100 flex flex-col items-center space-y-2 text-center max-w-xs transform scale-95 transition-all">
+                                <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                                    <i data-lucide="lock" class="w-5 h-5"></i>
+                                </div>
+                                <span class="text-xs font-extrabold text-slate-700">${m}ヶ月目：ロック中</span>
+                                <p class="text-[10px] text-slate-400 leading-relaxed">${m - 1}ヶ月目の振り返りに対して、上司からのフィードバックが確定するとロックが解除されます。</p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-b border-slate-100 pb-3 mb-4 opacity-40">
+                            <span class="text-xs font-bold text-slate-400">Phase ${m} / 3</span>
+                            <h3 class="text-lg font-bold text-slate-500 mt-0.5">${m}ヶ月目の振り返り</h3>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                    continue;
+                }
+
+                // 過去の月 (提出＆フィードバック完了済み) または 現在の月 (アクティブ)
+                const isPast = m < curr;
+                const isSubmitted = mData.submitted;
+
+                let headerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                        <div>
+                            <span class="text-xs font-extrabold ${isPast ? 'text-mint-600' : 'text-navy-600'} tracking-wider">Phase ${m} / 3</span>
+                            <h3 class="text-lg font-bold text-navy-800 mt-0.5">${m}ヶ月目の振り返り</h3>
+                        </div>
+                        <div>
+                            ${isPast ? '<span class="bg-mint-50 text-mint-700 border border-mint-200 text-xs px-3 py-1 rounded-full font-bold">完了</span>' : 
+                              isSubmitted ? '<span class="bg-saffron-50 text-saffron-700 border border-saffron-200 text-xs px-3 py-1 rounded-full font-bold animate-pulse">上司確認中</span>' : 
+                              '<span class="bg-navy-50 text-navy-700 border border-navy-200 text-xs px-3 py-1 rounded-full font-bold">入力中</span>'}
+                        </div>
+                    </div>
+                `;
+
+                let bodyHTML = "";
+
+                if (isPast) {
+                    // 過去の月：提出内容と上司のフィードバックが読取専用で並ぶ
+                    bodyHTML = `
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+                                <div>
+                                    <span class="font-bold text-navy-700">できたこと：</span>
+                                    <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.done}</p>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-red-700">できなかったこと・課題：</span>
+                                    <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.failed}</p>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-saffron-700">改善点と次月の工夫：</span>
+                                    <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.improvements}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 bg-white p-3 rounded-lg border border-slate-100 text-xs">
+                                <span class="text-slate-400">アクションプラン変更:</span>
+                                <span class="font-bold text-slate-700">${mData.changePlan === 'keep' ? '現状維持' : '一部変更する'}</span>
+                                <div class="h-3 w-px bg-slate-200"></div>
+                                <span class="text-slate-400">一言メモ:</span>
+                                <span class="text-slate-600 italic">${mData.memo || "なし"}</span>
+                            </div>
+                            
+                            <!-- 上司フィードバック -->
+                            <div class="bg-navy-50/50 p-5 rounded-2xl border border-navy-100/50 flex items-start gap-3 mt-2">
+                                <div class="p-2 bg-white rounded-lg text-navy-800 shadow-sm border border-slate-100">
+                                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-bold text-navy-600">上司からのフィードバック</span>
+                                    <p class="text-xs leading-relaxed text-slate-700 mt-1 whitespace-pre-wrap">${mData.bossFeedback.comment}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 現在のアクティブな月
+                    if (isSubmitted) {
+                        // 提出済みで上司のフィードバック待ち
+                        bodyHTML = `
+                            <div class="space-y-4">
+                                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl flex items-center gap-2 text-xs">
+                                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                                    <span>${m}ヶ月目の振り返りシートは提出済みです。上司からのフィードバックをお待ちください。</span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs opacity-60">
+                                    <div>
+                                        <span class="font-bold text-navy-700">できたこと：</span>
+                                        <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.done}</p>
+                                    </div>
+                                    <div>
+                                        <span class="font-bold text-red-700">できなかったこと・課題：</span>
+                                        <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.failed}</p>
+                                    </div>
+                                    <div>
+                                        <span class="font-bold text-saffron-700">改善点と次月の工夫：</span>
+                                        <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.improvements}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // 未提出。入力可能なフォーム
+                        bodyHTML = `
+                            <form onsubmit="submitDetailedMonth(event, ${m})" class="space-y-5">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="space-y-1">
+                                        <label for="input-det-done-${m}" class="text-xs font-bold text-navy-800 flex items-center gap-1">
+                                            <span class="w-1 h-3 bg-navy-800 rounded-full"></span>
+                                            <span>できたこと (行動の成果)</span>
+                                        </label>
+                                        <textarea id="input-det-done-${m}" rows="3" required class="w-full rounded-xl border border-slate-200 p-3 text-xs focus:border-navy-500 focus:ring-1 focus:ring-navy-500 outline-none transition-all" placeholder="どのような成果が出ましたか？"></textarea>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label for="input-det-failed-${m}" class="text-xs font-bold text-navy-800 flex items-center gap-1">
+                                            <span class="w-1 h-3 bg-navy-800 rounded-full"></span>
+                                            <span>できなかったこと・課題</span>
+                                        </label>
+                                        <textarea id="input-det-failed-${m}" rows="3" required class="w-full rounded-xl border border-slate-200 p-3 text-xs focus:border-navy-500 focus:ring-1 focus:ring-navy-500 outline-none transition-all" placeholder="何が難しかったですか？"></textarea>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label for="input-det-improvements-${m}" class="text-xs font-bold text-navy-800 flex items-center gap-1">
+                                            <span class="w-1 h-3 bg-navy-800 rounded-full"></span>
+                                            <span>改善点と次月の工夫</span>
+                                        </label>
+                                        <textarea id="input-det-improvements-${m}" rows="3" required class="w-full rounded-xl border border-slate-200 p-3 text-xs focus:border-navy-500 focus:ring-1 focus:ring-navy-500 outline-none transition-all" placeholder="次月はどう改善しますか？"></textarea>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-50">
+                                    <div class="space-y-2">
+                                        <span class="text-xs font-bold text-navy-800 flex items-center gap-1">
+                                            <span class="w-1 h-3 bg-navy-800 rounded-full"></span>
+                                            <span>来月のアクションプランの変更有無</span>
+                                        </span>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <label class="cursor-pointer group">
+                                                <input type="radio" name="changePlan-${m}" value="keep" checked class="sr-only">
+                                                <div class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-center hover:bg-white transition-all text-xs font-bold py-3">
+                                                    現状維持
+                                                </div>
+                                            </label>
+                                            <label class="cursor-pointer group">
+                                                <input type="radio" name="changePlan-${m}" value="modify" class="sr-only">
+                                                <div class="p-2 bg-slate-50 border border-slate-200 rounded-xl text-center hover:bg-white transition-all text-xs font-bold py-3">
+                                                    一部変更する
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label for="input-det-memo-${m}" class="text-xs font-bold text-navy-800 flex items-center gap-1">
+                                            <span class="w-1 h-3 bg-navy-800 rounded-full"></span>
+                                            <span>相談・その他メモ</span>
+                                        </label>
+                                        <textarea id="input-det-memo-${m}" rows="2" class="w-full rounded-xl border border-slate-200 p-3 text-xs focus:border-navy-500 outline-none transition-all resize-none" placeholder="上司に相談したいことをお書きください。"></textarea>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end pt-3">
+                                    <button type="submit" class="bg-gradient-to-r from-navy-800 to-navy-700 hover:from-navy-700 hover:to-navy-600 text-white font-bold px-6 py-2.5 rounded-xl shadow-sm text-xs transition-all flex items-center gap-2 group transform active:scale-95">
+                                        <span>${m}ヶ月目のシートを提出する</span>
+                                        <i data-lucide="send" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        `;
+                    }
+                }
+
+                card.innerHTML = headerHTML + bodyHTML;
+                container.appendChild(card);
+            }
+            lucide.createIcons();
+        }
+
+        // B. 上司画面のレンダリング
+        function renderBossView() {
+            document.getElementById('view-boss').classList.remove('hidden');
+
+            const isSubmitted = state.currentMode === 'light' ? state.lightMode.submitted : true; // じっくりシートは中で提出待ち制御をするため、ここではライトのみチェック
+            const placeholder = document.getElementById('boss-placeholder');
+            const lightContainer = document.getElementById('boss-light-container');
+            const detailedContainer = document.getElementById('boss-detailed-container');
+
+            if (state.currentMode === 'light') {
+                detailedContainer.classList.add('hidden');
+                if (!state.lightMode.submitted) {
+                    placeholder.classList.remove('hidden');
+                    lightContainer.classList.add('hidden');
+                } else {
+                    placeholder.classList.add('hidden');
+                    lightContainer.classList.remove('hidden');
+
+                    const data = state.lightMode;
+                    document.getElementById('boss-light-action-display').textContent = data.action;
+                    document.getElementById('boss-light-progress-val').textContent = data.progress + "%";
+                    document.getElementById('boss-light-progress-bar').style.width = data.progress + "%";
+                    
+                    const feelingTextMap = {
+                        "😀": "大満足", "🙂": "満足", "😐": "ふつう", "🙁": "やや不満", "😢": "苦戦"
+                    };
+                    document.getElementById('boss-light-feeling-emoji').textContent = data.feeling || "😐";
+                    document.getElementById('boss-light-feeling-text').textContent = feelingTextMap[data.feeling] || "未記入";
+                    document.getElementById('boss-light-memo').textContent = data.memo || "（一言メモの入力はありませんでした）";
+
+                    const stampGroup = document.getElementById('quick-stamp-group');
+                    const doneInd = document.getElementById('boss-light-done-indicator');
+                    if (data.bossFeedback.stamp) {
+                        stampGroup.classList.add('opacity-50', 'pointer-events-none');
+                        doneInd.classList.remove('hidden');
+                    } else {
+                        stampGroup.classList.remove('opacity-50', 'pointer-events-none');
+                        doneInd.classList.add('hidden');
+                    }
+                }
+            } else {
+                // じっくりシート
+                placeholder.classList.add('hidden');
+                lightContainer.classList.add('hidden');
+                detailedContainer.classList.remove('hidden');
+
+                renderDetailedTimelineBoss();
+            }
+        }
+
+        // じっくり：上司タイムラインUIの描画
+        function renderDetailedTimelineBoss() {
+            const container = document.getElementById('boss-detailed-timeline');
+            container.innerHTML = '';
+            const curr = state.detailedMode.currentMonth;
+
+            for (let m = 1; m <= 3; m++) {
+                const mData = state.detailedMode.months[m];
+                const card = document.createElement('div');
+                card.className = "relative";
+
+                // タイムライン丸ピン
+                const pin = document.createElement('div');
+                if (m < curr) {
+                    pin.className = "absolute -left-[33px] sm:-left-[41px] top-1.5 w-6 h-6 rounded-full bg-mint-500 border-4 border-white flex items-center justify-center shadow-sm text-[9px] font-bold text-white";
+                    pin.innerHTML = "✓";
+                } else if (m === curr) {
+                    pin.className = "absolute -left-[33px] sm:-left-[41px] top-1.5 w-6 h-6 rounded-full bg-navy-800 border-4 border-white flex items-center justify-center shadow-sm text-[9px] font-bold text-white animate-pulse";
+                    pin.innerHTML = m;
+                } else {
+                    pin.className = "absolute -left-[33px] sm:-left-[41px] top-1.5 w-6 h-6 rounded-full bg-slate-200 border-4 border-white flex items-center justify-center shadow-sm text-[9px] font-bold text-slate-400";
+                    pin.innerHTML = "<i data-lucide='lock' class='w-2 h-2'></i>";
+                }
+                card.appendChild(pin);
+
+                const cardContent = document.createElement('div');
+                cardContent.className = "space-y-4 mb-8 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm";
+
+                let headerHTML = `
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-navy-800">${m}ヶ月目の振り返り</h3>
+                        ${m < curr ? '<span class="bg-mint-100 text-mint-700 text-[10px] px-2 py-0.5 rounded-full font-bold">対応完了</span>' :
+                          m === curr && mData.submitted ? '<span class="bg-saffron-100 text-saffron-700 text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">要確認</span>' :
+                          m === curr ? '<span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full font-bold">受講生提出待ち</span>' :
+                          '<span class="bg-slate-50 text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold">未到達</span>'}
+                    </div>
+                `;
+
+                let bodyHTML = "";
+
+                if (m > curr) {
+                    // 未来のロック月
+                    bodyHTML = `<p class="text-xs text-slate-400">現在ロック中。この期間の振り返りはまだ提出されていません。</p>`;
+                } else if (m < curr) {
+                    // 過去の完了月
+                    bodyHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50/70 p-4 rounded-xl border border-slate-100 text-xs">
+                            <div>
+                                <span class="font-bold text-navy-700">できたこと:</span>
+                                <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.done}</p>
+                            </div>
+                            <div>
+                                <span class="font-bold text-red-700">課題:</span>
+                                <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.failed}</p>
+                            </div>
+                            <div>
+                                <span class="font-bold text-saffron-700">改善点:</span>
+                                <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.improvements}</p>
+                            </div>
+                        </div>
+                        <div class="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 text-xs space-y-1">
+                            <span class="font-bold text-emerald-800 flex items-center gap-1">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                                <span>確定済みフィードバック：</span>
+                            </span>
+                            <p class="text-slate-700 mt-1 whitespace-pre-wrap">${mData.bossFeedback.comment}</p>
+                        </div>
+                    `;
+                } else {
+                    // 現在のアクティブな月
+                    if (!mData.submitted) {
+                        bodyHTML = `
+                            <div class="bg-slate-50/70 p-6 rounded-xl border border-dashed border-slate-200 text-center flex flex-col items-center justify-center space-y-2 text-xs">
+                                <i data-lucide="hourglass" class="w-6 h-6 text-slate-400 animate-spin"></i>
+                                <span class="text-slate-500 font-medium">山田太郎さんからの提出を待っています...</span>
+                            </div>
+                        `;
+                    } else {
+                        // 提出されていて、上司のフィードバック待ち
+                        bodyHTML = `
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+                                <div>
+                                    <span class="font-bold text-navy-700">できたこと:</span>
+                                    <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.done}</p>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-red-700">できなかったこと・課題:</span>
+                                    <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.failed}</p>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-saffron-700">改善点と次月の工夫:</span>
+                                    <p class="text-slate-600 mt-1 whitespace-pre-wrap">${mData.improvements}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 bg-white p-3 rounded-lg border border-slate-100 text-xs">
+                                <span class="text-slate-400">アクションプラン変更:</span>
+                                <span class="font-bold text-slate-700">${mData.changePlan === 'keep' ? '現状維持' : '一部変更する'}</span>
+                                <div class="h-3 w-px bg-slate-200"></div>
+                                <span class="text-slate-400">本人メモ:</span>
+                                <span class="text-slate-600 italic">${mData.memo || "なし"}</span>
+                            </div>
+                            
+                            <!-- フィードバックコメント入力フォーム -->
+                            <div class="bg-navy-50/50 p-4 rounded-xl border border-navy-100/50 space-y-3">
+                                <label for="input-boss-detailed-comment-${m}" class="text-xs font-bold text-navy-800 flex items-center gap-1.5">
+                                    <i data-lucide="message-circle" class="w-3.5 h-3.5 text-navy-600"></i>
+                                    <span>上司からのフィードバックコメント</span>
+                                </label>
+                                <textarea id="input-boss-detailed-comment-${m}" rows="3" class="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs focus:border-navy-500 outline-none" placeholder="部下の努力を認め、次のステップを促す具体的なフィードバックを入力します。"></textarea>
+                                <div class="flex justify-end">
+                                    <button onclick="confirmDetailedFeedback(${m})" class="bg-navy-800 hover:bg-navy-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm flex items-center gap-1.5 group transform active:scale-95">
+                                        <span>フィードバックを確定する</span>
+                                        <i data-lucide="check" class="w-3 h-3 group-hover:scale-110"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                cardContent.innerHTML = headerHTML + bodyHTML;
+                card.appendChild(cardContent);
+                container.appendChild(card);
+            }
+            lucide.createIcons();
+        }
+
+        // C. 人事画面のレンダリング
+        function renderHrView() {
+            document.getElementById('view-hr').classList.remove('hidden');
+
+            const modeBadge = document.getElementById('hr-table-mode');
+            const statusBadge = document.getElementById('hr-table-status');
+            const timeCell = document.getElementById('hr-table-time');
+
+            modeBadge.textContent = state.currentMode === 'light' ? 'ライト伴走' : 'じっくりシート';
+            
+            // 進捗ステータス計算
+            const currentStatus = state.currentMode === 'light' ? state.lightMode.status : state.detailedMode.status;
+            statusBadge.textContent = currentStatus;
+
+            if (currentStatus === '初期設定中') {
+                statusBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 animate-pulse";
+            } else if (currentStatus === '未提出' || currentStatus.includes('提出待ち')) {
+                statusBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200";
+            } else if (currentStatus === '上司確認待ち' || currentStatus.includes('上司確認中')) {
+                statusBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-saffron-100 text-saffron-700 border border-saffron-200 animate-pulse";
+            } else if (currentStatus === '完了') {
+                statusBadge.className = "px-2.5 py-1 rounded-full text-xs font-bold bg-mint-100 text-mint-700 border border-mint-200";
+            }
+
+            const now = new Date();
+            timeCell.textContent = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+            // サマリーカード数値集計
+            let unsubmitted = 0;
+            let waiting = 0;
+            let completed = 0;
+
+            if (currentStatus === '初期設定中') {
+                unsubmitted = 1; 
+            } else if (currentStatus === '未提出' || currentStatus.includes('提出待ち')) {
+                unsubmitted = 1;
+            } else if (currentStatus === '上司確認待ち' || currentStatus.includes('上司確認中')) {
+                waiting = 1;
+            } else if (currentStatus === '完了') {
+                completed = 1;
+            }
+
+            document.getElementById('hr-stat-unsubmitted').textContent = unsubmitted + "名";
+            document.getElementById('hr-stat-waiting').textContent = waiting + "名";
+            document.getElementById('hr-stat-completed').textContent = completed + "名";
+        }
+
+
+        // --- 6. アクション処理 (提出・確定ロジック) ---
+
+        // ライト伴走モード：受講生提出
+        function submitLight(event) {
+            event.preventDefault();
+            const selectedFeeling = document.querySelector('input[name="feeling"]:checked');
+            if (!selectedFeeling) {
+                showToast("手応え（絵文字）をどれか1つ選択してください！", true);
+                return;
+            }
+
+            state.lightMode.feeling = selectedFeeling.value;
+            state.lightMode.memo = document.getElementById('input-light-memo').value;
+            state.lightMode.submitted = true;
+            state.lightMode.status = "上司確認待ち";
+
+            showToast("今週の振り返りを提出しました！上司へリアルタイムに通知されました。");
+            render();
+        }
+
+        // じっくりシートモード：受講生各月の振り返り提出
+        function submitDetailedMonth(event, monthNum) {
+            event.preventDefault();
+
+            const done = document.getElementById(`input-det-done-${monthNum}`).value.trim();
+            const failed = document.getElementById(`input-det-failed-${monthNum}`).value.trim();
+            const improvements = document.getElementById(`input-det-improvements-${monthNum}`).value.trim();
+            const memo = document.getElementById(`input-det-memo-${monthNum}`).value.trim();
+            const changePlan = document.querySelector(`input[name="changePlan-${monthNum}"]:checked`).value;
+
+            const mData = state.detailedMode.months[monthNum];
+            mData.done = done;
+            mData.failed = failed;
+            mData.improvements = improvements;
+            mData.memo = memo;
+            mData.changePlan = changePlan;
+            mData.submitted = true;
+
+            state.detailedMode.status = `${monthNum}ヶ月目上司確認中`;
+
+            showToast(`${monthNum}ヶ月目の振り返りを提出しました！上司タイムラインへ即時反映されました。`);
+            render();
+        }
+
+        // ライト伴走モード：上司スタンプ送信
+        function sendStamp(stampText, emoji) {
+            state.lightMode.bossFeedback.stamp = stampText;
+            state.lightMode.bossFeedback.emoji = emoji;
+            state.lightMode.status = "完了";
+
+            showToast(`受講生（山田太郎）へ「${stampText}」スタンプを送信しました！`);
+            render();
+        }
+
+        // じっくりシートモード：上司のフィードバック確定と次の月のロック解除
+        function confirmDetailedFeedback(monthNum) {
+            const comment = document.getElementById(`input-boss-detailed-comment-${monthNum}`).value.trim();
+            if (!comment) {
+                showToast("フィードバックコメントを入力してください。", true);
+                return;
+            }
+
+            const mData = state.detailedMode.months[monthNum];
+            mData.bossFeedback.comment = comment;
+            mData.bossFeedback.confirmed = true;
+
+            // 段階的ロック解除ロジック
+            if (monthNum < 3) {
+                state.detailedMode.currentMonth = monthNum + 1;
+                state.detailedMode.status = `${monthNum + 1}ヶ月目提出待ち`;
+                showToast(`${monthNum}ヶ月目のフィードバックを確定しました！これにより受講生画面の「${monthNum + 1}ヶ月目」振り返りフォームが解放されました！`);
+            } else {
+                // 3ヶ月目完了
+                state.detailedMode.status = "完了";
+                showToast("3ヶ月伴走プロセスのすべてのフィードバックが確定しました！");
+            }
+
+            render();
+        }
+
+
+        // --- 7. ユーティリティ (トースト・Excel出力モーダル) ---
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = message;
+            
+            if (isError) {
+                toast.classList.remove('bg-slate-900');
+                toast.classList.add('bg-red-600');
+                toastIcon.setAttribute('data-lucide', 'alert-circle');
+            } else {
+                toast.classList.remove('bg-red-600');
+                toast.classList.add('bg-slate-900');
+                toastIcon.setAttribute('data-lucide', 'check-circle');
+            }
+            lucide.createIcons();
+
+            toast.className = toast.className.replace('translate-y-full opacity-0', 'toast-active');
+            
+            setTimeout(() => {
+                toast.className = toast.className.replace('toast-active', 'translate-y-full opacity-0');
+            }, 3000);
+        }
+
+        function startDummyExcelExport() {
+            // 初期設定前はエラー
+            if (state.appPhase === 'setup') {
+                showToast("受講生の初期設定が完了するまでデータを出力できません！", true);
+                return;
+            }
+
+            const modal = document.getElementById('excel-modal');
+            const card = document.getElementById('excel-modal-card');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                card.classList.remove('scale-95');
+            }, 50);
+
+            document.getElementById('excel-loading-spinner').classList.remove('hidden');
+            document.getElementById('excel-complete-view').classList.add('hidden');
+
+            // 出力データリストの動的生成 (WOW効果)
+            const list = document.getElementById('excel-collected-data-list');
+            list.innerHTML = "";
+            
+            if (state.currentMode === 'light') {
+                list.innerHTML = `
+                    <li>受講生基本情報およびライトアクションプラン:「${state.lightMode.action}」</li>
+                    <li>週次伴走ステータス: 「${state.lightMode.status}」</li>
+                    ${state.lightMode.submitted ? `<li>提出済み週次感情ログ: ${state.lightMode.feeling} (${state.lightMode.progress}%)</li>` : ""}
+                `;
+            } else {
+                list.innerHTML = `
+                    <li>目指すリーダー像:「${state.detailedMode.fixed.vision}」</li>
+                    <li>アクションプラン: ${state.detailedMode.plans.map(p => p.item).join(', ')}</li>
+                    <li>タイムライン進捗ステータス: 「${state.detailedMode.status}」</li>
+                    ${state.detailedMode.months[1].submitted ? "<li>1ヶ月目の振り返り・評価データ</li>" : ""}
+                    ${state.detailedMode.months[2].submitted ? "<li>2ヶ月目の振り返り・評価データ</li>" : ""}
+                    ${state.detailedMode.months[3].submitted ? "<li>3ヶ月目の振り返り・評価データ</li>" : ""}
+                `;
+            }
+
+            setTimeout(() => {
+                document.getElementById('excel-loading-spinner').classList.add('hidden');
+                document.getElementById('excel-complete-view').classList.remove('hidden');
+                showToast("じっくりシートExcelファイルの出力が正常に完了しました！");
+            }, 2000);
+        }
+
+        function closeExcelModal() {
+            const modal = document.getElementById('excel-modal');
+            const card = document.getElementById('excel-modal-card');
+
+            modal.classList.add('opacity-0');
+            card.classList.add('scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+    </script>
+</body>
+</html>
